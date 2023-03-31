@@ -1,24 +1,22 @@
 const knex = require('../database/knex')
 const ErrorAlert = require('../utils/ErrorAlert')
 const { hash, compareSync } = require('bcryptjs')
+const UserRepository = require('../repositories/UserRepository')
 
 class UsersController {
   async create(request, response) {
-    const { name, email, password, avatar } = request.body
+    const { name, email, password } = request.body
 
-    const userExists = await knex('users').where({ email }).first()
+    const userRepository = new UserRepository()
+
+    const userExists = await userRepository.findByEmail(email)
     const hashedPassword = await hash(password, 8)
 
     if (userExists) {
       throw new ErrorAlert('This email is already being used!')
     }
 
-    await knex('users').insert({
-      name,
-      email,
-      password: hashedPassword,
-      avatar
-    })
+    await userRepository.create({ name, email, password: hashedPassword })
 
     return response.json()
   }
